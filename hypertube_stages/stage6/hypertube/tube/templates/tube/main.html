@@ -1,0 +1,23 @@
+{% extends 'tube/base.html' %}
+
+{% block title %} Main {% endblock %}
+
+{% block content %}
+<form action="{% url 'main' %}" method="get">
+    <input type="search" id="q" name="q" value="{{ q }}">
+    <input type="submit" value="search">
+</form>
+{% if tag %}
+    <a href="/tube/?tag={{ tag }}">#{{ tag }}</a>
+{% endif %}
+<p>{{ video_count }} videos</p>
+{% if videos %}
+    {% for video in videos %}
+        <p><a href="/tube/watch/{{ video.id }}/">{{ video.title }}</a></p>
+    {% endfor %}
+{% else %}
+    <p>No videos are available.</p>
+{% endif %}
+
+<a href="/tube/upload/">Upload video</a>
+{% endblock %}
