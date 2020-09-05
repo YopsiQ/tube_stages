@@ -1,0 +1,15 @@
+{% extends 'tube/base.html' %}
+
+{% block title %} Signup {% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block user %}{% endblock %}
+
+{% block content %}
+<form method="post" action="{% url 'signup' %}">
+    {% csrf_token %}
+	{{ form.as_p }}
+	<input class="btn_spec" type="submit" value="Submit"/>
+</form>
+{% endblock %}
