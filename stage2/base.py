@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import http.cookiejar
 import io
+import os
 import re
 import sqlite3
 import urllib
@@ -14,6 +15,8 @@ UPLOADING_FILE_NAME = 'test_video.mp4'
 
 with open(UPLOADING_FILE_NAME, 'rb') as f:
     test_video_data = f.read()
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 INITIAL_TAGS = [
     (1, 'sport'),
@@ -51,6 +54,21 @@ class HyperTubeTest(DjangoTest):
     PASSWORD = 'TestPassword123'
     TAG = 'testtag'
     TITLE = 'Test Video'
+
+    def __init__(self, *args, **kwargs):
+        os.environ['HYPERSKILL_MEDIA_ROOT'] = CURRENT_DIR
+        file_and_dir_names = os.listdir(CURRENT_DIR)
+        file_name_without_extension = UPLOADING_FILE_NAME.split('.')[0]
+        for name in file_and_dir_names:
+            if file_name_without_extension in name:
+                self.__delete_file(name)
+
+        super().__init__(*args, **kwargs)
+
+    def __delete_file(self, name):
+        file_path = os.path.join(CURRENT_DIR, name)
+        if name != UPLOADING_FILE_NAME and os.path.exists(file_path):
+            os.remove(file_path)
 
     def check_create_videos(self) -> CheckResult:
         connection = sqlite3.connect(TEST_DATABASE)
@@ -570,6 +588,7 @@ class HyperTubeTest(DjangoTest):
                 f'Watch page should contain <source> element with src '
                 f'{video_template_link}'
             )
+        file_name_to_delete = video_link.split('/')[-1]
 
         video_response = requests.get(
             f'http://localhost:{self.port}{video_link}/')
@@ -577,11 +596,13 @@ class HyperTubeTest(DjangoTest):
         required_header = {'Accept-Ranges': 'bytes'}
 
         if video_response.headers.get('Accept-Ranges') != 'bytes':
+            self.__delete_file(file_name_to_delete)
             return CheckResult.false(
                 f'Video response should contain header {required_header}'
             )
 
         if video_response.headers.get('Content-Type') != 'video/mp4':
+            self.__delete_file(file_name_to_delete)
             return CheckResult.false(
                 f'Video response should contain Content-Type header, '
                 f'e.g. Content-Type: video/mp4 for mp4 video'
@@ -592,8 +613,10 @@ class HyperTubeTest(DjangoTest):
             response_file_bytes.write(chunk)
 
         if response_file_bytes.getvalue() != test_video_data:
+            self.__delete_file(file_name_to_delete)
             return CheckResult.false(
                 'Video response should contain uploaded file in bytes'
             )
 
+        self.__delete_file(file_name_to_delete)
         return CheckResult.true()

@@ -123,5 +123,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # MEDIA
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT = os.environ.get('HYPERSKILL_MEDIA_ROOT') or os.path.join(BASE_DIR, 'media/')
 MEDIA_URL = '/media/'
